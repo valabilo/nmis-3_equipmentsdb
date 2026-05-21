@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Equipment Database Management System
 
 Premium serverless asset management platform built with React 19, TypeScript, Vite, TailwindCSS v4, TanStack Table, React Query, Zustand, and Framer Motion.
@@ -73,3 +74,7 @@ React Vite App
 ```
 
 The frontend remains fully serverless and deploys cleanly to Vercel. React Query owns server state, Zustand owns local UI/auth/theme state, and the table/report/export systems are modular under `src/components` and `src/services`.
+=======
+# NMIS-III_EquipmentsDB
+This is the official equipment database of NMIS-III
+>>>>>>> f99ffb9c457d9c8257b4553f309b511b68ffa474
