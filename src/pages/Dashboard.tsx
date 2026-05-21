@@ -53,9 +53,9 @@ export function Dashboard() {
       <section className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div className="section-heading">
           <p className="microcopy">Overview</p>
-          <h2 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl dark:text-white">Asset command center</h2>
+          <h2 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl dark:text-white">Equipment Management Overview</h2>
           <p className="max-w-2xl text-xs leading-5 text-zinc-500 sm:text-sm sm:leading-6">
-            Live inventory, accountability, employee assignments, and high-signal operational status in one quiet workspace.
+            View inventory totals, accountability records, employee assignments, and equipment status in one workspace.
           </p>
         </div>
         <SearchBar value={query} onChange={setQuery} placeholder="Search employees, property numbers, locations..." className="w-full md:w-96" />
