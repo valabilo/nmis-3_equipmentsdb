@@ -19,6 +19,7 @@ const tooltipStyle = {
   borderRadius: '12px',
   color: 'var(--chart-tooltip-text)',
 };
+const tooltipTextStyle = { color: 'var(--chart-tooltip-text)' };
 
 export function Dashboard() {
   const [query, setQuery] = useState('');
@@ -81,7 +82,7 @@ export function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
                 <XAxis dataKey="name" hide />
                 <YAxis allowDecimals={false} tick={{ fill: 'var(--chart-axis)' }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: 'var(--chart-tooltip-text)' }} cursor={{ stroke: 'var(--chart-grid)' }} />
+                <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipTextStyle} labelStyle={tooltipTextStyle} cursor={{ stroke: 'var(--chart-grid)' }} />
                 <Area
                   dataKey="value"
                   stroke="var(--chart-trend)"
@@ -104,7 +105,7 @@ export function Dashboard() {
                       <Cell key={index} fill={chartColors[index % chartColors.length]} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: 'var(--chart-tooltip-text)' }} />
+                  <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipTextStyle} labelStyle={tooltipTextStyle} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
