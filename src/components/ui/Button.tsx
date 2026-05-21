@@ -18,11 +18,11 @@ const variants: Record<ButtonVariant, string> = {
 export function Button({ className = '', variant = 'primary', icon, children, ...props }: ButtonProps) {
   return (
     <button
-      className={`inline-flex h-10 max-w-full items-center justify-center gap-2.5 rounded-lg px-4 text-sm font-medium leading-none transition disabled:pointer-events-none disabled:opacity-50 ${variants[variant]} ${className}`}
+      className={`inline-flex h-10 max-w-full items-center justify-center gap-2.5 rounded-lg px-4 text-sm font-medium leading-normal transition disabled:pointer-events-none disabled:opacity-50 ${variants[variant]} ${className}`}
       {...props}
     >
-      {icon ? <span className="size-4">{icon}</span> : null}
-      {children ? <span className="truncate">{children}</span> : null}
+      {icon ? <span className="flex size-4 shrink-0 items-center justify-center overflow-visible [&>svg]:size-4 [&>svg]:overflow-visible">{icon}</span> : null}
+      {children ? <span className="min-w-0 truncate">{children}</span> : null}
     </button>
   );
 }
