@@ -1,0 +1,204 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --color-surface: hsl(0 0% 100%);
+  --color-ink: hsl(240 10% 3.9%);
+  --color-muted: hsl(240 4% 46%);
+  --color-line: hsl(240 6% 90%);
+  --shadow-premium: none;
+  --radius-card: 0.75rem;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
+  body {
+    min-height: 100vh;
+    margin: 0;
+    overflow-x: hidden;
+    background:
+      radial-gradient(circle at top left, rgb(244 244 245 / 0.9), transparent 32rem),
+      linear-gradient(180deg, #ffffff 0%, #fafafa 42%, #f4f4f5 100%);
+    color: #09090b;
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    text-rendering: geometricPrecision;
+    --chart-trend: #18181b;
+    --chart-trend-soft: rgb(24 24 27 / 0.28);
+    --chart-grid: rgb(212 212 216 / 0.72);
+    --chart-axis: #71717a;
+    --chart-tooltip-bg: rgb(255 255 255 / 0.96);
+    --chart-tooltip-border: rgb(228 228 231);
+    --chart-tooltip-text: #18181b;
+    --chart-1: #18181b;
+    --chart-2: #52525b;
+    --chart-3: #71717a;
+    --chart-4: #a1a1aa;
+    --chart-5: #d4d4d8;
+  }
+
+  .dark body {
+    background:
+      radial-gradient(circle at top left, rgb(63 63 70 / 0.28), transparent 34rem),
+      linear-gradient(180deg, #050505 0%, #09090b 48%, #111113 100%);
+    color: #fafafa;
+    --chart-trend: #f4f4f5;
+    --chart-trend-soft: rgb(244 244 245 / 0.2);
+    --chart-grid: rgb(113 113 122 / 0.34);
+    --chart-axis: #a1a1aa;
+    --chart-tooltip-bg: rgb(24 24 27 / 0.96);
+    --chart-tooltip-border: rgb(63 63 70);
+    --chart-tooltip-text: #fafafa;
+    --chart-1: #fafafa;
+    --chart-2: #d4d4d8;
+    --chart-3: #a1a1aa;
+    --chart-4: #71717a;
+    --chart-5: #52525b;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+    min-width: 0;
+  }
+
+  ::selection {
+    background: rgb(24 24 27 / 0.14);
+  }
+}
+
+@utility panel {
+  border: 1px solid rgb(228 228 231 / 0.86);
+  background: rgb(255 255 255 / 0.78);
+  backdrop-filter: blur(18px);
+}
+
+@utility dark-panel {
+  border-color: rgb(63 63 70 / 0.75);
+  background: rgb(24 24 27 / 0.68);
+}
+
+@utility microcopy {
+  font-size: 0.68rem;
+  line-height: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(113 113 122);
+}
+
+@utility page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1rem, 2vw, 2rem);
+  min-width: 0;
+}
+
+@utility section-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+@utility control-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+@utility field-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+@layer utilities {
+  .thin-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(161 161 170 / 0.5) transparent;
+  }
+
+  .section-heading h1,
+  .section-heading h2,
+  .section-heading h3,
+  .section-heading p,
+  .wrap-anywhere {
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .control-row > * {
+    max-width: 100%;
+  }
+
+  .responsive-print-preview {
+    width: min(100%, 210mm);
+    min-width: min(100%, 210mm);
+  }
+
+  .print-page {
+    width: 210mm;
+    min-height: 297mm;
+  }
+
+  @media print {
+    @page {
+      size: A4;
+      margin: 16mm;
+    }
+
+    html,
+    body {
+      background: #fff !important;
+      color: #000 !important;
+      overflow: visible !important;
+    }
+
+    .no-print {
+      display: none !important;
+    }
+
+    .print-page {
+      box-shadow: none !important;
+      width: auto;
+      min-height: calc(297mm - 32mm);
+      margin: 0;
+      padding: 0 !important;
+      break-after: page;
+    }
+
+    .print-page:last-child {
+      break-after: auto;
+    }
+
+    table {
+      width: 100%;
+      page-break-inside: auto;
+    }
+
+    thead {
+      display: table-header-group;
+    }
+
+    tr {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      page-break-after: auto;
+    }
+  }
+}
