@@ -15,6 +15,8 @@ export type Employee = {
   position: string;
 };
 
+export type EmployeePayload = Employee;
+
 export type EquipmentCategory =
   | 'PPE ACCOUNTABILITY'
   | 'SEMI-EXPENDABLE PROPERTY (SE)'

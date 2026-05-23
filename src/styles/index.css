@@ -146,14 +146,27 @@
     max-width: 100%;
   }
 
-  .responsive-print-preview {
-    width: min(100%, 210mm);
-    min-width: min(100%, 210mm);
+  .print-preview-surface {
+    display: inline-block;
+    max-width: 100%;
+    vertical-align: top;
   }
 
   .print-page {
-    width: 210mm;
-    min-height: 297mm;
+    display: flow-root;
+    width: min(100%, 210mm);
+    height: auto;
+    min-height: 0;
+  }
+
+  .print-employee-group {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .print-employee-heading {
+    break-after: avoid;
+    page-break-after: avoid;
   }
 
   @media print {
@@ -176,14 +189,16 @@
     .print-page {
       box-shadow: none !important;
       width: auto;
-      min-height: calc(297mm - 32mm);
+      height: auto !important;
+      min-height: 0 !important;
       margin: 0;
       padding: 0 !important;
-      break-after: page;
     }
 
-    .print-page:last-child {
-      break-after: auto;
+    .print-preview-surface {
+      display: block;
+      max-width: none;
+      width: auto;
     }
 
     table {

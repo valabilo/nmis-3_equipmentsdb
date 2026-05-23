@@ -116,7 +116,7 @@ export function Reports() {
           </div>
           <PrintButton contentRef={printRef} label="Print preview" />
         </div>
-        <div ref={printRef}>
+        <div ref={printRef} className="print-preview-surface">
           <AccountabilityReport employee={employee} equipment={scopedEquipment} />
         </div>
       </div>

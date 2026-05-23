@@ -20,9 +20,10 @@ type DataTableProps<T> = {
   globalFilter?: string;
   enableSelection?: boolean;
   onSelectionChange?: (rows: T[]) => void;
+  onRowClick?: (row: T) => void;
 };
 
-export function DataTable<T>({ data, columns, globalFilter = '', enableSelection, onSelectionChange }: DataTableProps<T>) {
+export function DataTable<T>({ data, columns, globalFilter = '', enableSelection, onSelectionChange, onRowClick }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -129,7 +130,17 @@ export function DataTable<T>({ data, columns, globalFilter = '', enableSelection
           </thead>
           <tbody>
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="group hover:bg-zinc-50/90 dark:hover:bg-zinc-900/60">
+              <tr
+                key={row.id}
+                tabIndex={onRowClick ? 0 : undefined}
+                className={`group hover:bg-zinc-50/90 dark:hover:bg-zinc-900/60 ${onRowClick ? 'cursor-pointer focus:outline-none focus-visible:bg-zinc-50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-300 dark:focus-visible:bg-zinc-900 dark:focus-visible:ring-zinc-700' : ''}`}
+                onClick={() => onRowClick?.(row.original)}
+                onKeyDown={(event) => {
+                  if (!onRowClick || (event.key !== 'Enter' && event.key !== ' ')) return;
+                  event.preventDefault();
+                  onRowClick(row.original);
+                }}
+              >
                 {row.getVisibleCells().map((cell, index) => {
                   const isDescription = cell.column.id === 'itemDescription';
                   const renderedCell = flexRender(cell.column.columnDef.cell, cell.getContext());

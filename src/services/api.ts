@@ -1,5 +1,5 @@
 import { mockEmployees, mockEquipments } from './mockData';
-import type { ApiResponse, Employee, Equipment, EquipmentPayload } from '../types';
+import type { ApiResponse, Employee, EmployeePayload, Equipment, EquipmentPayload } from '../types';
 
 const API_URL = import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL as string | undefined;
 const USE_MOCKS = import.meta.env.VITE_ENABLE_MOCKS !== 'false';
@@ -47,6 +47,40 @@ async function mockRequest<T>(action: string, init?: RequestInit): Promise<ApiRe
   switch (action) {
     case 'getEmployees':
       return { success: true, message: 'Employees loaded', data: mockEmployees as T };
+    case 'createEmployee': {
+      const employee: Employee = {
+        ...payload.employee,
+        employeeId: String(payload.employee.employeeId ?? '').trim(),
+        name: String(payload.employee.name ?? '').trim(),
+        position: String(payload.employee.position ?? '').trim(),
+        status: String(payload.employee.status ?? '').trim() || 'Active',
+      };
+      mockEmployees.unshift(employee);
+      return { success: true, message: 'Employee created successfully', data: employee as T };
+    }
+    case 'updateEmployee': {
+      const previousEmployee = payload.previousEmployee as Employee | undefined;
+      const employee = payload.employee as Employee;
+      const lookupId = previousEmployee?.employeeId ?? employee.employeeId;
+      const index = mockEmployees.findIndex((item) => item.employeeId === lookupId);
+      if (index >= 0) {
+        const previousName = mockEmployees[index].name;
+        mockEmployees[index] = {
+          ...mockEmployees[index],
+          ...employee,
+          employeeId: String(employee.employeeId ?? '').trim(),
+          name: String(employee.name ?? '').trim(),
+          position: String(employee.position ?? '').trim(),
+          status: String(employee.status ?? '').trim() || 'Active',
+        };
+        if (previousName !== mockEmployees[index].name) {
+          mockEquipments.forEach((item) => {
+            if (item.issuedTo === previousName) item.issuedTo = mockEmployees[index].name;
+          });
+        }
+      }
+      return { success: true, message: 'Employee updated successfully', data: mockEmployees[index] as T };
+    }
     case 'getEquipments':
       return { success: true, message: 'Equipments loaded', data: mockEquipments as T };
     case 'getEquipmentByEmployee':
@@ -83,6 +117,16 @@ async function mockRequest<T>(action: string, init?: RequestInit): Promise<ApiRe
 
 export const api = {
   getEmployees: () => request<Employee[]>('getEmployees').then((response) => response.data),
+  createEmployee: (employee: EmployeePayload) =>
+    request<Employee>('createEmployee', {
+      method: 'POST',
+      body: JSON.stringify({ employee }),
+    }).then((response) => response.data),
+  updateEmployee: (employee: EmployeePayload, previousEmployee?: Employee) =>
+    request<Employee>('updateEmployee', {
+      method: 'PUT',
+      body: JSON.stringify({ employee, previousEmployee }),
+    }).then((response) => response.data),
   getEquipments: () => request<Equipment[]>('getEquipments').then((response) => response.data),
   getEquipmentByEmployee: (employeeName: string) =>
     request<Equipment[]>('getEquipmentByEmployee', {

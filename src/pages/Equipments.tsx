@@ -1,11 +1,13 @@
 import { PencilSquareIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import type { ColumnDef } from '@tanstack/react-table';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
 import { ConfirmDeleteModal } from '../components/ui/ConfirmDeleteModal';
 import { ExportButton } from '../components/ui/ExportButton';
+import { HighlightText } from '../components/ui/HighlightText';
 import { SearchBar } from '../components/ui/SearchBar';
 import { DataTable } from '../components/tables/DataTable';
 import { EquipmentFormModal } from '../components/forms/EquipmentFormModal';
@@ -18,7 +20,8 @@ import { formatCurrency, formatDate } from '../utils/format';
 import { searchEquipment } from '../utils/search';
 
 export function Equipments() {
-  const [query, setQuery] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [query, setQuery] = useState(() => searchParams.get('q') ?? '');
   const [editing, setEditing] = useState<Equipment | null>(null);
   const [deleting, setDeleting] = useState<Equipment | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -30,21 +33,40 @@ export function Equipments() {
   const filtered = searchEquipment(equipment, debounced);
   const exportRows = mapEquipmentRows(selected.length ? selected : filtered);
 
+  useEffect(() => {
+    setQuery(searchParams.get('q') ?? '');
+  }, [searchParams]);
+
+  const updateQuery = (value: string) => {
+    setQuery(value);
+    const nextParams = new URLSearchParams(searchParams);
+    if (value.trim()) {
+      nextParams.set('q', value);
+    } else {
+      nextParams.delete('q');
+    }
+    setSearchParams(nextParams, { replace: true });
+  };
+
   const columns = useMemo<ColumnDef<Equipment>[]>(
     () => [
       {
         accessorKey: 'propertyNo',
         header: 'Property No.',
-        cell: ({ row }) => <span className="font-medium text-zinc-950 dark:text-white">{row.original.propertyNo}</span>,
+        cell: ({ row }) => (
+          <span className="font-medium text-zinc-950 dark:text-white">
+            <HighlightText text={row.original.propertyNo} query={query} />
+          </span>
+        ),
       },
-      { accessorKey: 'article', header: 'Article' },
-      { accessorKey: 'itemDescription', header: 'Description' },
-      { accessorKey: 'issuedTo', header: 'Issued To', cell: ({ row }) => row.original.issuedTo || 'Unassigned' },
-      { accessorKey: 'accountabilityNo', header: 'Accountability' },
-      { accessorKey: 'location', header: 'Location' },
+      { accessorKey: 'article', header: 'Article', cell: ({ row }) => <HighlightText text={row.original.article} query={query} /> },
+      { accessorKey: 'itemDescription', header: 'Description', cell: ({ row }) => <HighlightText text={row.original.itemDescription} query={query} /> },
+      { accessorKey: 'issuedTo', header: 'Issued To', cell: ({ row }) => <HighlightText text={row.original.issuedTo || 'Unassigned'} query={query} /> },
+      { accessorKey: 'accountabilityNo', header: 'Accountability', cell: ({ row }) => <HighlightText text={row.original.accountabilityNo} query={query} /> },
+      { accessorKey: 'location', header: 'Location', cell: ({ row }) => <HighlightText text={row.original.location} query={query} /> },
       { accessorKey: 'amount', header: 'Amount', cell: ({ row }) => formatCurrency(row.original.amount) },
       { accessorKey: 'dateIssued', header: 'Date Issued', cell: ({ row }) => formatDate(row.original.dateIssued) },
-      { accessorKey: 'status', header: 'Status', cell: ({ row }) => <Badge tone={row.original.status}>{row.original.status}</Badge> },
+      { accessorKey: 'status', header: 'Status', cell: ({ row }) => <Badge tone={row.original.status}><HighlightText text={row.original.status || 'No Status'} query={query} /></Badge> },
       {
         id: 'actions',
         header: 'Actions',
@@ -71,7 +93,7 @@ export function Equipments() {
         ),
       },
     ],
-    [],
+    [query],
   );
 
   return (
@@ -94,7 +116,7 @@ export function Equipments() {
         </div>
       </section>
       <Card className="p-3 sm:p-5">
-        <SearchBar value={query} onChange={setQuery} placeholder="Search by property no., employee, description, status, location..." />
+        <SearchBar value={query} onChange={updateQuery} placeholder="Search by property no., employee, description, status, location..." />
       </Card>
       <DataTable data={filtered} columns={columns} enableSelection onSelectionChange={setSelected} />
       <EquipmentFormModal

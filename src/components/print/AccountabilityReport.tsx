@@ -1,44 +1,34 @@
 import type { Employee, Equipment } from '../../types';
 import { formatCurrency, formatDate } from '../../utils/format';
 
-const MAX_PRINT_ROW_WEIGHT = 12;
-
 export function AccountabilityReport({ employee, equipment }: { employee?: Employee; equipment: Equipment[] }) {
-  const total = equipment.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-  const pages = paginateEquipment(equipment);
-  const showSignatureBlock = Boolean(employee);
+  const assignedEquipment = employee ? equipment : equipment.filter((item) => item.issuedTo.trim());
+  const total = assignedEquipment.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const employeeGroups = groupEquipmentByEmployee(assignedEquipment);
 
   return (
-    <>
-      {pages.map((items, pageIndex) => {
-        const isLastPage = pageIndex === pages.length - 1;
-
-        return (
-          <section key={`print-page-${pageIndex}`} className="print-page flex flex-col bg-white p-10 text-black">
-            <ReportHeader employee={employee} />
-            <EquipmentTable equipment={items} />
-            {isLastPage ? (
-              <>
-                <div className="mt-4 text-right text-sm font-semibold">Total Value: {formatCurrency(total)}</div>
-                {showSignatureBlock ? (
-                  <div className="mt-16 grid grid-cols-2 gap-16 text-center text-xs">
-                    <div>
-                      <div className="border-t border-black pt-2">Issued By / Property Officer</div>
-                    </div>
-                    <div>
-                      <div className="border-t border-black pt-2">Received By / Accountable Employee</div>
-                    </div>
-                  </div>
-                ) : null}
-              </>
-            ) : null}
-            <div className="mt-auto pt-6 text-right text-[10px] text-zinc-600">
-              Page {pageIndex + 1} of {pages.length}
-            </div>
-          </section>
-        );
-      })}
-    </>
+    <section className="print-page bg-white p-10 text-black">
+      <ReportHeader employee={employee} />
+      {employee ? (
+        <EquipmentTable equipment={assignedEquipment} />
+      ) : (
+        <div className="mt-8 space-y-6">
+          {employeeGroups.map(([employeeName, items]) => (
+            <section key={employeeName} className="print-employee-group">
+              <div className="print-employee-heading mb-2 flex items-end justify-between gap-4 border-b border-black pb-1 text-sm">
+                <h2 className="font-semibold">{employeeName}</h2>
+                <p className="text-xs">
+                  {items.length} item{items.length === 1 ? '' : 's'} | {formatCurrency(sumEquipmentValue(items))}
+                </p>
+              </div>
+              <EquipmentTable equipment={items} compact />
+            </section>
+          ))}
+          {!employeeGroups.length ? <p className="text-sm">No assigned equipment records found.</p> : null}
+        </div>
+      )}
+      <div className="mt-4 text-right text-sm font-semibold">Total Value: {formatCurrency(total)}</div>
+    </section>
   );
 }
 
@@ -68,9 +58,9 @@ function ReportHeader({ employee }: { employee?: Employee }) {
   );
 }
 
-function EquipmentTable({ equipment }: { equipment: Equipment[] }) {
+function EquipmentTable({ equipment, compact = false }: { equipment: Equipment[]; compact?: boolean }) {
   return (
-    <table className="mt-8 w-full border-collapse text-xs">
+    <table className={`${compact ? 'mt-0' : 'mt-8'} w-full border-collapse text-xs`}>
       <thead>
         <tr>
           {['Property No.', 'Description', 'Accountability', 'Date', 'Status', 'Amount'].map((head) => (
@@ -96,31 +86,17 @@ function EquipmentTable({ equipment }: { equipment: Equipment[] }) {
   );
 }
 
-function paginateEquipment(equipment: Equipment[]) {
-  const source = equipment.length ? equipment : ([] as Equipment[]);
-  const pages: Equipment[][] = [];
-  let currentPage: Equipment[] = [];
-  let currentWeight = 0;
+function groupEquipmentByEmployee(equipment: Equipment[]) {
+  const groups = equipment.reduce<Record<string, Equipment[]>>((acc, item) => {
+    const employeeName = item.issuedTo.trim() || 'Unassigned';
+    acc[employeeName] = acc[employeeName] ?? [];
+    acc[employeeName].push(item);
+    return acc;
+  }, {});
 
-  for (const item of source) {
-    const rowWeight = getPrintRowWeight(item);
-    if (currentPage.length && currentWeight + rowWeight > MAX_PRINT_ROW_WEIGHT) {
-      pages.push(currentPage);
-      currentPage = [];
-      currentWeight = 0;
-    }
-
-    currentPage.push(item);
-    currentWeight += rowWeight;
-  }
-
-  if (currentPage.length || !pages.length) pages.push(currentPage);
-  return pages;
+  return Object.entries(groups).sort(([first], [second]) => first.localeCompare(second));
 }
 
-function getPrintRowWeight(item: Equipment) {
-  const textLength = [item.propertyNo, item.itemDescription, item.accountabilityNo, item.status, formatCurrency(item.amount)]
-    .join(' ')
-    .length;
-  return Math.max(1, Math.ceil(textLength / 130));
+function sumEquipmentValue(equipment: Equipment[]) {
+  return equipment.reduce((sum, item) => sum + Number(item.amount || 0), 0);
 }

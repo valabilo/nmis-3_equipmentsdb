@@ -1,6 +1,7 @@
 import { STATUS_STYLES } from '../../constants/sheets';
+import type { ReactNode } from 'react';
 
-export function Badge({ children, tone }: { children: string; tone?: string }) {
+export function Badge({ children, tone }: { children: ReactNode; tone?: string }) {
   const style = tone ? STATUS_STYLES[tone] : undefined;
   return (
     <span

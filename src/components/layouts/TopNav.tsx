@@ -1,5 +1,6 @@
 import { ArrowRightOnRectangleIcon, Bars3Icon, MoonIcon, SunIcon } from '@heroicons/react/24/outline';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '../ui/Button';
 import { SearchBar } from '../ui/SearchBar';
 import { useTheme } from '../../hooks/useTheme';
@@ -8,11 +9,30 @@ import { useAuthStore } from '../../store/authStore';
 
 export function TopNav() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [quickSearch, setQuickSearch] = useState('');
   const { theme, setTheme } = useTheme();
   const setSidebarOpen = useAppStore((state) => state.setSidebarOpen);
   const sidebarCollapsed = useAppStore((state) => state.sidebarCollapsed);
   const logout = useAuthStore((state) => state.logout);
   const title = location.pathname.split('/').filter(Boolean).at(-1) ?? 'Dashboard';
+  const submitQuickSearch = (value: string) => {
+    const nextParams = new URLSearchParams(location.search);
+    const query = value.trim();
+
+    if (query) {
+      nextParams.set('q', query);
+    } else {
+      nextParams.delete('q');
+    }
+
+    const search = nextParams.toString();
+    navigate(`${location.pathname}${search ? `?${search}` : ''}`);
+  };
+
+  useEffect(() => {
+    setQuickSearch(new URLSearchParams(location.search).get('q') ?? '');
+  }, [location.search]);
 
   return (
     <header
@@ -25,7 +45,13 @@ export function TopNav() {
           <p className="microcopy hidden sm:block">Module</p>
           <h1 className="truncate text-base font-semibold capitalize text-zinc-950 sm:text-lg dark:text-white">{title}</h1>
         </div>
-        <SearchBar value="" onChange={() => undefined} placeholder="Quick search..." className="ml-auto hidden w-80 md:block" />
+        <SearchBar
+          value={quickSearch}
+          onChange={setQuickSearch}
+          onSubmit={submitQuickSearch}
+          placeholder="Quick search..."
+          className="ml-auto hidden w-80 md:block"
+        />
         <Button
           variant="ghost"
           className="ml-auto shrink-0 px-3 md:ml-0"

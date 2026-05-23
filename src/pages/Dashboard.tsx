@@ -7,7 +7,8 @@ import { Badge } from '../components/ui/Badge';
 import { useEmployees } from '../hooks/useEmployees';
 import { useEquipments } from '../hooks/useEquipment';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { getEquipmentValue, isEquipmentAssigned, isEquipmentAvailable } from '../utils/equipment';
 import { searchEquipment } from '../utils/search';
 import { formatCurrency, formatDate } from '../utils/format';
@@ -22,7 +23,8 @@ const tooltipStyle = {
 const tooltipTextStyle = { color: 'var(--chart-tooltip-text)' };
 
 export function Dashboard() {
-  const [query, setQuery] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [query, setQuery] = useState(() => searchParams.get('q') ?? '');
   const debounced = useDebouncedValue(query);
   const { data: equipment = [] } = useEquipments();
   const { data: employees = [] } = useEmployees();
@@ -48,6 +50,21 @@ export function Dashboard() {
     }, {}),
   ).map(([name, value]) => ({ name, value }));
 
+  useEffect(() => {
+    setQuery(searchParams.get('q') ?? '');
+  }, [searchParams]);
+
+  const updateQuery = (value: string) => {
+    setQuery(value);
+    const nextParams = new URLSearchParams(searchParams);
+    if (value.trim()) {
+      nextParams.set('q', value);
+    } else {
+      nextParams.delete('q');
+    }
+    setSearchParams(nextParams, { replace: true });
+  };
+
   return (
     <motion.div className="page-stack" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <section className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
@@ -58,7 +75,7 @@ export function Dashboard() {
             View inventory totals, accountability records, employee assignments, and equipment status in one workspace.
           </p>
         </div>
-        <SearchBar value={query} onChange={setQuery} placeholder="Search employees, property numbers, locations..." className="w-full md:w-96" />
+        <SearchBar value={query} onChange={updateQuery} placeholder="Search employees, property numbers, locations..." className="w-full md:w-96" />
       </section>
       <DashboardStats stats={stats} />
       <div className="grid gap-3 sm:gap-6 xl:grid-cols-[1.15fr_0.85fr]">
