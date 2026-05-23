@@ -15,7 +15,9 @@ import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { useEmployees } from '../hooks/useEmployees';
 import { useEquipmentMutations, useEquipments } from '../hooks/useEquipment';
 import { exportCsv, exportEquipmentPdf, exportExcel, mapEquipmentRows } from '../services/export';
+import { useAppStore } from '../store/appStore';
 import type { Equipment } from '../types';
+import { findDuplicateEquipment } from '../utils/equipment';
 import { formatCurrency, formatDate } from '../utils/format';
 import { searchEquipment } from '../utils/search';
 
@@ -30,6 +32,7 @@ export function Equipments() {
   const { data: equipment = [] } = useEquipments();
   const { data: employees = [] } = useEmployees();
   const mutations = useEquipmentMutations();
+  const pushToast = useAppStore((state) => state.pushToast);
   const filtered = searchEquipment(equipment, debounced);
   const exportRows = mapEquipmentRows(selected.length ? selected : filtered);
 
@@ -123,9 +126,20 @@ export function Equipments() {
         open={formOpen}
         employees={employees}
         equipment={editing}
+        existingEquipment={equipment}
         loading={mutations.createEquipment.isPending || mutations.updateEquipment.isPending}
         onClose={() => setFormOpen(false)}
         onSubmit={(payload) => {
+          const duplicateEquipment = findDuplicateEquipment(equipment, payload);
+          if (duplicateEquipment) {
+            pushToast({
+              title: 'Duplicate equipment found',
+              description: `Property no. ${duplicateEquipment.propertyNo} already exists.`,
+              tone: 'danger',
+            });
+            return;
+          }
+
           if (payload.id) {
             mutations.updateEquipment.mutate(payload as Equipment);
           } else {

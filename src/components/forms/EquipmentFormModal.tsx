@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { SHEET_TABS } from '../../constants/sheets';
 import type { Employee, Equipment, EquipmentPayload } from '../../types';
+import { findDuplicateEquipment } from '../../utils/equipment';
 import { Button } from '../ui/Button';
 import { Input, Textarea } from '../ui/Input';
 import { Modal } from '../ui/Modal';
@@ -25,6 +26,7 @@ export function EquipmentFormModal({
   open,
   employees,
   equipment,
+  existingEquipment = [],
   loading,
   onClose,
   onSubmit,
@@ -32,11 +34,14 @@ export function EquipmentFormModal({
   open: boolean;
   employees: Employee[];
   equipment?: Equipment | null;
+  existingEquipment?: Equipment[];
   loading?: boolean;
   onClose: () => void;
   onSubmit: (payload: EquipmentPayload & { id?: string }) => void;
 }) {
   const [form, setForm] = useState<EquipmentPayload & { id?: string }>(emptyEquipment);
+  const duplicateEquipment = findDuplicateEquipment(existingEquipment, form);
+  const isDuplicate = Boolean(duplicateEquipment);
 
   useEffect(() => {
     setForm(equipment ? { ...equipment } : emptyEquipment);
@@ -56,7 +61,7 @@ export function EquipmentFormModal({
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={() => onSubmit(form)} disabled={loading || !form.propertyNo || !form.itemDescription}>
+          <Button onClick={() => onSubmit(form)} disabled={loading || !form.propertyNo || !form.itemDescription || isDuplicate}>
             {equipment ? 'Update record' : 'Create record'}
           </Button>
         </div>
@@ -74,7 +79,17 @@ export function EquipmentFormModal({
           <Input value={form.article} onChange={(event) => update('article', event.target.value)} />
         </Field>
         <Field label="Property number">
-          <Input value={form.propertyNo} onChange={(event) => update('propertyNo', event.target.value)} />
+          <Input
+            value={form.propertyNo}
+            onChange={(event) => update('propertyNo', event.target.value)}
+            aria-invalid={isDuplicate}
+            className={isDuplicate ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-500/10 dark:border-rose-800 dark:focus:border-rose-700' : ''}
+          />
+          {duplicateEquipment ? (
+            <span className="text-xs leading-5 text-rose-600 dark:text-rose-400">
+              Equipment with property no. {duplicateEquipment.propertyNo} already exists.
+            </span>
+          ) : null}
         </Field>
         <Field label="Amount">
           <Input type="number" value={form.amount} onChange={(event) => update('amount', Number(event.target.value))} />
