@@ -86,7 +86,7 @@ export function mapEquipmentRows(equipment: Equipment[]) {
     'Property No.': item.propertyNo,
     Description: item.itemDescription,
     Amount: getEquipmentValue(item),
-    'Accountability No.': item.accountabilityNo,
+    'PAR No.': item.accountabilityNo,
     'Issued To': item.issuedTo,
     'Date Issued': formatDate(item.dateIssued),
     Status: item.status,

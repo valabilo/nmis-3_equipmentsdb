@@ -8,6 +8,7 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { ExportButton } from '../components/ui/ExportButton';
+import { LoadingSkeleton, SkeletonBlock } from '../components/ui/LoadingSkeleton';
 import { PrintButton } from '../components/ui/PrintButton';
 import { useEmployees } from '../hooks/useEmployees';
 import { useEquipments } from '../hooks/useEquipment';
@@ -43,8 +44,10 @@ export function EmployeeDetails() {
 
   if (employeesLoading) {
     return (
-      <Card className="p-8 text-center">
-        <h2 className="text-xl font-semibold">Loading employee...</h2>
+      <Card className="p-8">
+        <div className="mx-auto max-w-md">
+          <LoadingSkeleton rows={3} />
+        </div>
       </Card>
     );
   }
@@ -89,7 +92,11 @@ export function EmployeeDetails() {
         ].map(([label, value]) => (
           <Card key={label} className="p-4 sm:p-6">
             <p className="microcopy">{label}</p>
-            <p className="mt-3 text-2xl font-semibold text-zinc-950 dark:text-white">{equipmentLoading ? 'Loading...' : value}</p>
+            {equipmentLoading ? (
+              <SkeletonBlock className="mt-3 h-8 w-20" />
+            ) : (
+              <p className="mt-3 text-2xl font-semibold text-zinc-950 dark:text-white">{value}</p>
+            )}
           </Card>
         ))}
       </div>
@@ -102,7 +109,7 @@ export function EmployeeDetails() {
           <Info label="Employment Status" value={employee.status} />
         </div>
       </Card>
-      <DataTable data={assigned} columns={columns} loading={equipmentLoading} loadingLabel="Loading equipment..." />
+      <DataTable data={assigned} columns={columns} loading={equipmentLoading} />
       <div className="fixed left-[-10000px] top-0">
         <div ref={printRef}>
           <AccountabilityReport employee={employee} equipment={assigned} />

@@ -13,6 +13,7 @@ import {
 import { ChevronDownIcon, ChevronUpDownIcon } from '@heroicons/react/24/outline';
 import { useMemo, useState } from 'react';
 import { Pagination } from '../ui/Pagination';
+import { SkeletonBlock, TableLoadingRows } from '../ui/LoadingSkeleton';
 
 type DataTableProps<T> = {
   data: T[];
@@ -20,7 +21,6 @@ type DataTableProps<T> = {
   globalFilter?: string;
   enableSelection?: boolean;
   loading?: boolean;
-  loadingLabel?: string;
   onSelectionChange?: (rows: T[]) => void;
   onRowClick?: (row: T) => void;
 };
@@ -31,7 +31,6 @@ export function DataTable<T>({
   globalFilter = '',
   enableSelection,
   loading,
-  loadingLabel = 'Loading records...',
   onSelectionChange,
   onRowClick,
 }: DataTableProps<T>) {
@@ -85,7 +84,7 @@ export function DataTable<T>({
   return (
     <div className="min-w-0 overflow-hidden rounded-xl border border-zinc-200 bg-white/80 dark:border-zinc-800 dark:bg-zinc-950/60">
       <div className="flex flex-col gap-3 border-b border-zinc-200 px-3 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:px-5 sm:py-4 dark:border-zinc-800">
-        <span className="shrink-0 text-sm text-zinc-500">{loading ? loadingLabel : `${data.length} records`}</span>
+        {loading ? <SkeletonBlock className="h-5 w-24" /> : <span className="shrink-0 text-sm text-zinc-500">{`${data.length} records`}</span>}
         <div className="flex max-w-full flex-wrap gap-1.5 sm:ml-auto">
           {table
             .getAllLeafColumns()
@@ -141,11 +140,7 @@ export function DataTable<T>({
           </thead>
           <tbody>
             {loading ? (
-              <tr>
-                <td colSpan={table.getVisibleLeafColumns().length} className="border-b border-zinc-100 px-3 py-10 text-center text-sm text-zinc-500 sm:px-5 dark:border-zinc-900">
-                  {loadingLabel}
-                </td>
-              </tr>
+              <TableLoadingRows rows={8} columns={table.getVisibleLeafColumns().length} />
             ) : null}
             {!loading && table.getRowModel().rows.map((row) => (
               <tr

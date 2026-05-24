@@ -33,12 +33,18 @@ export function useEquipmentMutations() {
         await refresh();
         pushToast({ title: 'Equipment added', tone: 'success' });
       },
+      onError: (error) => {
+        pushToast({ title: 'Equipment was not added', description: getErrorMessage(error), tone: 'danger' });
+      },
     }),
     updateEquipment: useMutation({
       mutationFn: (equipment: EquipmentPayload & { id: string }) => api.updateEquipment(equipment),
       onSuccess: async () => {
         await refresh();
         pushToast({ title: 'Equipment updated', tone: 'success' });
+      },
+      onError: (error) => {
+        pushToast({ title: 'Equipment was not updated', description: getErrorMessage(error), tone: 'danger' });
       },
     }),
     deleteEquipment: useMutation({
@@ -47,6 +53,13 @@ export function useEquipmentMutations() {
         await refresh();
         pushToast({ title: 'Equipment deleted', tone: 'success' });
       },
+      onError: (error) => {
+        pushToast({ title: 'Equipment was not deleted', description: getErrorMessage(error), tone: 'danger' });
+      },
     }),
   };
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Please try again.';
 }

@@ -105,7 +105,7 @@ export function Equipments() {
         <div className="section-heading">
           <p className="microcopy">Equipment Management</p>
           <h2 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl dark:text-white">Inventory registry</h2>
-          <p className="max-w-2xl text-xs leading-5 text-zinc-500 sm:text-sm">Manage property cards, assignments, locations, accountability numbers, and exportable reports.</p>
+          <p className="max-w-2xl text-xs leading-5 text-zinc-500 sm:text-sm">Manage property cards, assignments, locations, PAR numbers, and exportable reports.</p>
         </div>
         <div className="control-row">
           <ExportButton
@@ -121,7 +121,7 @@ export function Equipments() {
       <Card className="p-3 sm:p-5">
         <SearchBar value={query} onChange={updateQuery} placeholder="Search by property no., employee, description, status, location..." />
       </Card>
-      <DataTable data={filtered} columns={columns} enableSelection loading={equipmentLoading} loadingLabel="Loading equipment..." onSelectionChange={setSelected} />
+      <DataTable data={filtered} columns={columns} enableSelection loading={equipmentLoading} onSelectionChange={setSelected} />
       <EquipmentFormModal
         open={formOpen}
         employees={employees}
@@ -141,11 +141,19 @@ export function Equipments() {
           }
 
           if (payload.id) {
-            mutations.updateEquipment.mutate(payload as Equipment);
+            mutations.updateEquipment.mutate(payload as Equipment, {
+              onSuccess: () => {
+                setFormOpen(false);
+                setEditing(null);
+              },
+            });
           } else {
-            mutations.createEquipment.mutate(payload);
+            mutations.createEquipment.mutate(payload, {
+              onSuccess: () => {
+                setFormOpen(false);
+              },
+            });
           }
-          setFormOpen(false);
         }}
       />
       <ConfirmDeleteModal

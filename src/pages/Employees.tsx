@@ -1,4 +1,4 @@
-import { PencilSquareIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { PencilSquareIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -7,8 +7,10 @@ import { DataTable } from '../components/tables/DataTable';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { ConfirmDeleteModal } from '../components/ui/ConfirmDeleteModal';
 import { ExportButton } from '../components/ui/ExportButton';
 import { HighlightText } from '../components/ui/HighlightText';
+import { SkeletonBlock } from '../components/ui/LoadingSkeleton';
 import { SearchBar } from '../components/ui/SearchBar';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { useEmployeeMutations, useEmployees } from '../hooks/useEmployees';
@@ -23,6 +25,7 @@ export function Employees() {
   const navigate = useNavigate();
   const [query, setQuery] = useState(() => searchParams.get('q') ?? '');
   const [editing, setEditing] = useState<Employee | null>(null);
+  const [deleting, setDeleting] = useState<Employee | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const debounced = useDebouncedValue(query);
   const { data: employees = [], isLoading: employeesLoading } = useEmployees();
@@ -55,7 +58,7 @@ export function Employees() {
       {
         id: 'assigned',
         header: 'Assigned',
-        cell: ({ row }) => (equipmentLoading ? 'Loading...' : getEquipmentForEmployee(equipment, row.original).length),
+        cell: ({ row }) => (equipmentLoading ? <SkeletonBlock className="h-4 w-8" /> : getEquipmentForEmployee(equipment, row.original).length),
       },
       {
         id: 'profile',
@@ -72,6 +75,13 @@ export function Employees() {
                 setFormOpen(true);
               }}
             />
+            <Button
+              variant="ghost"
+              className="h-8 px-2 text-rose-600"
+              aria-label={`Delete ${row.original.name}`}
+              icon={<TrashIcon />}
+              onClick={() => setDeleting(row.original)}
+            />
           </div>
         ),
       },
@@ -81,11 +91,22 @@ export function Employees() {
 
   const submitEmployee = (payload: EmployeePayload) => {
     if (editing) {
-      mutations.updateEmployee.mutate({ employee: payload, previousEmployee: editing });
+      mutations.updateEmployee.mutate(
+        { employee: payload, previousEmployee: editing },
+        {
+          onSuccess: () => {
+            setFormOpen(false);
+            setEditing(null);
+          },
+        },
+      );
     } else {
-      mutations.createEmployee.mutate(payload);
+      mutations.createEmployee.mutate(payload, {
+        onSuccess: () => {
+          setFormOpen(false);
+        },
+      });
     }
-    setFormOpen(false);
   };
 
   return (
@@ -110,13 +131,26 @@ export function Employees() {
       <Card className="p-3 sm:p-5">
         <SearchBar value={query} onChange={updateQuery} placeholder="Search employees by name, ID, position, status..." />
       </Card>
-      <DataTable data={filtered} columns={columns} loading={employeesLoading} loadingLabel="Loading employees..." onRowClick={(employee) => navigate(`/app/employees/${encodeEmployeeKey(employee)}`)} />
+      <DataTable data={filtered} columns={columns} loading={employeesLoading} onRowClick={(employee) => navigate(`/app/employees/${encodeEmployeeKey(employee)}`)} />
       <EmployeeFormModal
         open={formOpen}
         employee={editing}
         loading={mutations.createEmployee.isPending || mutations.updateEmployee.isPending}
-        onClose={() => setFormOpen(false)}
+        onClose={() => {
+          setFormOpen(false);
+          setEditing(null);
+        }}
         onSubmit={submitEmployee}
+      />
+      <ConfirmDeleteModal
+        open={Boolean(deleting)}
+        description={`Delete ${deleting?.name ?? 'this employee'}? Assigned equipment will be unassigned from this employee.`}
+        loading={mutations.deleteEmployee.isPending}
+        onClose={() => setDeleting(null)}
+        onConfirm={() => {
+          if (deleting) mutations.deleteEmployee.mutate(deleting);
+          setDeleting(null);
+        }}
       />
     </div>
   );

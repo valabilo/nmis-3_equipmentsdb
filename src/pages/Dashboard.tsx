@@ -4,6 +4,7 @@ import { DashboardStats } from '../features/dashboard/DashboardStats';
 import { Card } from '../components/ui/Card';
 import { SearchBar } from '../components/ui/SearchBar';
 import { Badge } from '../components/ui/Badge';
+import { LoadingSkeleton, SkeletonBlock } from '../components/ui/LoadingSkeleton';
 import { useEmployees } from '../hooks/useEmployees';
 import { useEquipments } from '../hooks/useEquipment';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
@@ -86,11 +87,11 @@ export function Dashboard() {
               <p className="microcopy">Category Statistics</p>
               <h3 className="mt-1 font-semibold text-zinc-950 dark:text-white">Inventory distribution</h3>
             </div>
-            <span className="shrink-0 text-xs text-zinc-500 sm:text-sm">{equipmentLoading ? 'Loading...' : formatCurrency(stats.totalValue)}</span>
+            {equipmentLoading ? <SkeletonBlock className="h-5 w-24 shrink-0" /> : <span className="shrink-0 text-xs text-zinc-500 sm:text-sm">{formatCurrency(stats.totalValue)}</span>}
           </div>
           <div className="h-52 sm:h-72">
             {equipmentLoading ? (
-              <div className="flex h-full items-center justify-center text-sm text-zinc-500">Loading equipment...</div>
+              <ChartSkeleton />
             ) : (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={categoryData}>
@@ -121,7 +122,7 @@ export function Dashboard() {
           <div className="mt-4 grid gap-4 sm:mt-5 sm:grid-cols-[0.9fr_1fr] sm:items-center">
             <div className="h-44 sm:h-52">
               {equipmentLoading ? (
-                <div className="flex h-full items-center justify-center text-sm text-zinc-500">Loading equipment...</div>
+                <ChartSkeleton compact />
               ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -136,7 +137,7 @@ export function Dashboard() {
               )}
             </div>
             <div className="space-y-3">
-              {equipmentLoading ? <p className="text-sm text-zinc-500">Loading status...</p> : null}
+              {equipmentLoading ? <LoadingSkeleton rows={4} /> : null}
               {!equipmentLoading && statusData.map((item, index) => (
                 <div key={item.name || `status-${index}`} className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-2 text-zinc-600 dark:text-zinc-300">
@@ -153,7 +154,7 @@ export function Dashboard() {
       <Card className="p-4 sm:p-6">
         <p className="microcopy">Recently Updated Equipments</p>
         <div className="mt-2 divide-y divide-zinc-100 sm:mt-4 dark:divide-zinc-900">
-          {equipmentLoading ? <p className="py-4 text-sm text-zinc-500">Loading equipment...</p> : null}
+          {equipmentLoading ? <LoadingSkeleton rows={5} /> : null}
           {!equipmentLoading && (filtered.length ? filtered : equipment.slice(0, 5)).map((item, index) => (
             <div key={item.id || `${item.propertyNo}-${index}`} className="grid gap-2 py-3 md:grid-cols-[1fr_auto_auto] md:items-center">
               <div>
@@ -167,5 +168,15 @@ export function Dashboard() {
         </div>
       </Card>
     </motion.div>
+  );
+}
+
+function ChartSkeleton({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className="flex h-full items-end gap-3">
+      {Array.from({ length: compact ? 5 : 8 }).map((_, index) => (
+        <SkeletonBlock key={index} className="flex-1" style={{ height: `${36 + ((index * 17) % 48)}%` }} />
+      ))}
+    </div>
   );
 }

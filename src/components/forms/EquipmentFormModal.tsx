@@ -94,13 +94,13 @@ export function EquipmentFormModal({
         <Field label="Amount">
           <Input type="number" value={form.amount} onChange={(event) => update('amount', Number(event.target.value))} />
         </Field>
-        <Field label="Accountability type">
+        <Field label="Reference type">
           <Select value={form.accountabilityType} onChange={(event) => update('accountabilityType', event.target.value)}>
             <option>PAR</option>
             <option>ICS</option>
           </Select>
         </Field>
-        <Field label="Accountability number">
+        <Field label="PAR No.">
           <Input value={form.accountabilityNo} onChange={(event) => update('accountabilityNo', event.target.value)} />
         </Field>
         <Field label="Issued to">

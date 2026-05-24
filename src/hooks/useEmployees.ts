@@ -28,6 +28,9 @@ export function useEmployeeMutations() {
         await refresh();
         pushToast({ title: 'Employee added', tone: 'success' });
       },
+      onError: (error) => {
+        pushToast({ title: 'Employee was not added', description: getErrorMessage(error), tone: 'danger' });
+      },
     }),
     updateEmployee: useMutation({
       mutationFn: ({ employee, previousEmployee }: { employee: EmployeePayload; previousEmployee?: Employee }) =>
@@ -36,6 +39,23 @@ export function useEmployeeMutations() {
         await refresh();
         pushToast({ title: 'Employee updated', tone: 'success' });
       },
+      onError: (error) => {
+        pushToast({ title: 'Employee was not updated', description: getErrorMessage(error), tone: 'danger' });
+      },
+    }),
+    deleteEmployee: useMutation({
+      mutationFn: (employee: Employee) => api.deleteEmployee(employee),
+      onSuccess: async () => {
+        await refresh();
+        pushToast({ title: 'Employee deleted', tone: 'success' });
+      },
+      onError: (error) => {
+        pushToast({ title: 'Employee was not deleted', description: getErrorMessage(error), tone: 'danger' });
+      },
     }),
   };
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Please try again.';
 }

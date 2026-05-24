@@ -59,7 +59,7 @@ export function EmployeeFormModal({
         </Field>
         <Field label="Status">
           <Select value={form.status} onChange={(event) => update('status', event.target.value)}>
-            {['Active', 'Inactive', 'Retired', 'Transferred'].map((status) => (
+            {['Active', 'Retired', 'Transferred'].map((status) => (
               <option key={status}>{status}</option>
             ))}
           </Select>
@@ -86,9 +86,9 @@ function Field({ label, children, className = '' }: { label: string; children: R
 
 function trimEmployee(employee: EmployeePayload) {
   return {
-    employeeId: employee.employeeId.trim(),
-    name: employee.name.trim(),
-    position: employee.position.trim(),
-    status: employee.status.trim() || 'Active',
+    employeeId: String(employee.employeeId ?? '').trim(),
+    name: String(employee.name ?? '').trim(),
+    position: String(employee.position ?? '').trim(),
+    status: String(employee.status ?? '').trim() || 'Active',
   };
 }
