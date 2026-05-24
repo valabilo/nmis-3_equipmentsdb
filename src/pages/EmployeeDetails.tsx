@@ -20,8 +20,8 @@ import { formatCurrency, formatDate } from '../utils/format';
 export function EmployeeDetails() {
   const { employeeId } = useParams();
   const printRef = useRef<HTMLDivElement>(null);
-  const { data: employees = [] } = useEmployees();
-  const { data: equipment = [] } = useEquipments();
+  const { data: employees = [], isLoading: employeesLoading } = useEmployees();
+  const { data: equipment = [], isLoading: equipmentLoading } = useEquipments();
   const employee = findEmployeeByKey(employees, employeeId);
   const assigned = getEquipmentForEmployee(equipment, employee);
   const totalValue = assigned.reduce((sum, item) => sum + getEquipmentValue(item), 0);
@@ -40,6 +40,14 @@ export function EmployeeDetails() {
     ],
     [],
   );
+
+  if (employeesLoading) {
+    return (
+      <Card className="p-8 text-center">
+        <h2 className="text-xl font-semibold">Loading employee...</h2>
+      </Card>
+    );
+  }
 
   if (!employee) {
     return (
@@ -81,7 +89,7 @@ export function EmployeeDetails() {
         ].map(([label, value]) => (
           <Card key={label} className="p-4 sm:p-6">
             <p className="microcopy">{label}</p>
-            <p className="mt-3 text-2xl font-semibold text-zinc-950 dark:text-white">{value}</p>
+            <p className="mt-3 text-2xl font-semibold text-zinc-950 dark:text-white">{equipmentLoading ? 'Loading...' : value}</p>
           </Card>
         ))}
       </div>
@@ -94,7 +102,7 @@ export function EmployeeDetails() {
           <Info label="Employment Status" value={employee.status} />
         </div>
       </Card>
-      <DataTable data={assigned} columns={columns} />
+      <DataTable data={assigned} columns={columns} loading={equipmentLoading} loadingLabel="Loading equipment..." />
       <div className="fixed left-[-10000px] top-0">
         <div ref={printRef}>
           <AccountabilityReport employee={employee} equipment={assigned} />

@@ -20,8 +20,9 @@ export function Reports() {
   const [kind, setKind] = useState<ReportKind>('inventory');
   const [employeeId, setEmployeeId] = useState('');
   const printRef = useRef<HTMLDivElement>(null);
-  const { data: employees = [] } = useEmployees();
-  const { data: equipment = [] } = useEquipments();
+  const { data: employees = [], isLoading: employeesLoading } = useEmployees();
+  const { data: equipment = [], isLoading: equipmentLoading } = useEquipments();
+  const loading = employeesLoading || equipmentLoading;
   const employee = findEmployeeByKey(employees, employeeId);
   const scopedEquipment = employee ? getEquipmentForEmployee(equipment, employee) : equipment;
   const rows = mapEquipmentRows(scopedEquipment);
@@ -97,17 +98,18 @@ export function Reports() {
           />
         </div>
         <div className="divide-y divide-zinc-100 dark:divide-zinc-900">
-          {grouped.map(([name, value], index) => (
+          {loading ? <p className="p-6 text-sm text-zinc-500">Loading report data...</p> : null}
+          {!loading && grouped.map(([name, value], index) => (
             <div key={name || `group-${index}`} className="grid gap-2 p-4 sm:gap-3 sm:p-6 md:grid-cols-[1fr_auto_auto]">
               <p className="font-medium">{name || 'Unspecified'}</p>
               <p className="text-sm text-zinc-500">{value.count} records</p>
               <p className="font-medium">{formatCurrency(value.value)}</p>
             </div>
           ))}
-          {!grouped.length ? <p className="p-6 text-sm text-zinc-500">No equipment records found for this report.</p> : null}
+          {!loading && !grouped.length ? <p className="p-6 text-sm text-zinc-500">No equipment records found for this report.</p> : null}
         </div>
       </Card>
-      <DataTable data={scopedEquipment} columns={columns} />
+      <DataTable data={scopedEquipment} columns={columns} loading={loading} loadingLabel="Loading report data..." />
       <div className="overflow-auto rounded-xl border border-zinc-200 bg-zinc-100 p-2 sm:p-5 dark:border-zinc-800 dark:bg-zinc-950">
         <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -116,9 +118,13 @@ export function Reports() {
           </div>
           <PrintButton contentRef={printRef} label="Print preview" />
         </div>
-        <div ref={printRef} className="print-preview-surface">
-          <AccountabilityReport employee={employee} equipment={scopedEquipment} />
-        </div>
+        {loading ? (
+          <p className="rounded-lg bg-white p-6 text-sm text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">Loading print preview...</p>
+        ) : (
+          <div ref={printRef} className="print-preview-surface">
+            <AccountabilityReport employee={employee} equipment={scopedEquipment} />
+          </div>
+        )}
       </div>
     </div>
   );

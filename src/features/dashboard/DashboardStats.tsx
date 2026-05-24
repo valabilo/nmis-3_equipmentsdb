@@ -3,13 +3,13 @@ import type { DashboardStats as DashboardStatsType } from '../../types';
 import { formatCurrency } from '../../utils/format';
 import { Card } from '../../components/ui/Card';
 
-export function DashboardStats({ stats }: { stats: DashboardStatsType }) {
+export function DashboardStats({ stats, loading }: { stats: DashboardStatsType; loading?: boolean }) {
   const cards = [
-    ['Total Equipments', stats.totalEquipments.toLocaleString()],
-    ['Assigned Equipments', stats.totalAssigned.toLocaleString()],
-    ['Available Equipments', stats.totalAvailable.toLocaleString()],
-    ['Total Employees', stats.totalEmployees.toLocaleString()],
-    ['Inventory Value', formatCurrency(stats.totalValue)],
+    ['Total Equipments', loading ? 'Loading...' : stats.totalEquipments.toLocaleString()],
+    ['Assigned Equipments', loading ? 'Loading...' : stats.totalAssigned.toLocaleString()],
+    ['Available Equipments', loading ? 'Loading...' : stats.totalAvailable.toLocaleString()],
+    ['Total Employees', loading ? 'Loading...' : stats.totalEmployees.toLocaleString()],
+    ['Inventory Value', loading ? 'Loading...' : formatCurrency(stats.totalValue)],
   ];
 
   return (

@@ -7,7 +7,7 @@ export function formatCurrency(value: number) {
 }
 
 export function formatDate(value: string | number | Date | null | undefined) {
-  if (!value) return 'Unissued';
+  if (!value) return 'N/A';
   const date = parseDate(value);
 
   if (!date) return String(value);

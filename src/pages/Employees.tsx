@@ -25,8 +25,8 @@ export function Employees() {
   const [editing, setEditing] = useState<Employee | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const debounced = useDebouncedValue(query);
-  const { data: employees = [] } = useEmployees();
-  const { data: equipment = [] } = useEquipments();
+  const { data: employees = [], isLoading: employeesLoading } = useEmployees();
+  const { data: equipment = [], isLoading: equipmentLoading } = useEquipments();
   const mutations = useEmployeeMutations();
   const filtered = searchEmployees(employees, debounced);
   const rows = mapEmployeeRows(filtered);
@@ -55,7 +55,7 @@ export function Employees() {
       {
         id: 'assigned',
         header: 'Assigned',
-        cell: ({ row }) => getEquipmentForEmployee(equipment, row.original).length,
+        cell: ({ row }) => (equipmentLoading ? 'Loading...' : getEquipmentForEmployee(equipment, row.original).length),
       },
       {
         id: 'profile',
@@ -76,7 +76,7 @@ export function Employees() {
         ),
       },
     ],
-    [equipment, query],
+    [equipment, equipmentLoading, query],
   );
 
   const submitEmployee = (payload: EmployeePayload) => {
@@ -110,7 +110,7 @@ export function Employees() {
       <Card className="p-3 sm:p-5">
         <SearchBar value={query} onChange={updateQuery} placeholder="Search employees by name, ID, position, status..." />
       </Card>
-      <DataTable data={filtered} columns={columns} onRowClick={(employee) => navigate(`/app/employees/${encodeEmployeeKey(employee)}`)} />
+      <DataTable data={filtered} columns={columns} loading={employeesLoading} loadingLabel="Loading employees..." onRowClick={(employee) => navigate(`/app/employees/${encodeEmployeeKey(employee)}`)} />
       <EmployeeFormModal
         open={formOpen}
         employee={editing}

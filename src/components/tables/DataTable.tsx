@@ -19,11 +19,22 @@ type DataTableProps<T> = {
   columns: ColumnDef<T>[];
   globalFilter?: string;
   enableSelection?: boolean;
+  loading?: boolean;
+  loadingLabel?: string;
   onSelectionChange?: (rows: T[]) => void;
   onRowClick?: (row: T) => void;
 };
 
-export function DataTable<T>({ data, columns, globalFilter = '', enableSelection, onSelectionChange, onRowClick }: DataTableProps<T>) {
+export function DataTable<T>({
+  data,
+  columns,
+  globalFilter = '',
+  enableSelection,
+  loading,
+  loadingLabel = 'Loading records...',
+  onSelectionChange,
+  onRowClick,
+}: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -74,7 +85,7 @@ export function DataTable<T>({ data, columns, globalFilter = '', enableSelection
   return (
     <div className="min-w-0 overflow-hidden rounded-xl border border-zinc-200 bg-white/80 dark:border-zinc-800 dark:bg-zinc-950/60">
       <div className="flex flex-col gap-3 border-b border-zinc-200 px-3 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:px-5 sm:py-4 dark:border-zinc-800">
-        <span className="shrink-0 text-sm text-zinc-500">{data.length} records</span>
+        <span className="shrink-0 text-sm text-zinc-500">{loading ? loadingLabel : `${data.length} records`}</span>
         <div className="flex max-w-full flex-wrap gap-1.5 sm:ml-auto">
           {table
             .getAllLeafColumns()
@@ -104,7 +115,7 @@ export function DataTable<T>({ data, columns, globalFilter = '', enableSelection
                 {headerGroup.headers.map((header, index) => (
                   <th
                     key={header.id}
-                    className={`border-b border-zinc-200 px-3 py-3 text-xs font-medium uppercase text-zinc-500 sm:px-5 sm:py-3.5 dark:border-zinc-800 ${
+                    className={`whitespace-nowrap border-b border-zinc-200 px-3 py-3 text-xs font-medium uppercase text-zinc-500 sm:px-5 sm:py-3.5 dark:border-zinc-800 ${
                       index === 0 ? 'sticky left-0 z-20 bg-zinc-50/95 dark:bg-zinc-900/95' : ''
                     }`}
                     style={{ width: header.getSize() }}
@@ -113,7 +124,7 @@ export function DataTable<T>({ data, columns, globalFilter = '', enableSelection
                       <button
                         type="button"
                         onClick={header.column.getToggleSortingHandler()}
-                        className="inline-flex max-w-40 items-center gap-1 text-left"
+                        className="inline-flex max-w-40 items-center gap-1 whitespace-nowrap text-left"
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         {header.column.getIsSorted() ? (
@@ -129,7 +140,14 @@ export function DataTable<T>({ data, columns, globalFilter = '', enableSelection
             ))}
           </thead>
           <tbody>
-            {table.getRowModel().rows.map((row) => (
+            {loading ? (
+              <tr>
+                <td colSpan={table.getVisibleLeafColumns().length} className="border-b border-zinc-100 px-3 py-10 text-center text-sm text-zinc-500 sm:px-5 dark:border-zinc-900">
+                  {loadingLabel}
+                </td>
+              </tr>
+            ) : null}
+            {!loading && table.getRowModel().rows.map((row) => (
               <tr
                 key={row.id}
                 tabIndex={onRowClick ? 0 : undefined}
@@ -167,12 +185,14 @@ export function DataTable<T>({ data, columns, globalFilter = '', enableSelection
           </tbody>
         </table>
       </div>
-      <Pagination
-        pageIndex={table.getState().pagination.pageIndex}
-        pageCount={table.getPageCount()}
-        onPrevious={() => table.previousPage()}
-        onNext={() => table.nextPage()}
-      />
+      {!loading ? (
+        <Pagination
+          pageIndex={table.getState().pagination.pageIndex}
+          pageCount={table.getPageCount()}
+          onPrevious={() => table.previousPage()}
+          onNext={() => table.nextPage()}
+        />
+      ) : null}
     </div>
   );
 }

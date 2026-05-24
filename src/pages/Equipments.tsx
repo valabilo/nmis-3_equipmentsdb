@@ -29,8 +29,8 @@ export function Equipments() {
   const [formOpen, setFormOpen] = useState(false);
   const [selected, setSelected] = useState<Equipment[]>([]);
   const debounced = useDebouncedValue(query);
-  const { data: equipment = [] } = useEquipments();
-  const { data: employees = [] } = useEmployees();
+  const { data: equipment = [], isLoading: equipmentLoading } = useEquipments();
+  const { data: employees = [], isLoading: employeesLoading } = useEmployees();
   const mutations = useEquipmentMutations();
   const pushToast = useAppStore((state) => state.pushToast);
   const filtered = searchEquipment(equipment, debounced);
@@ -65,7 +65,7 @@ export function Equipments() {
       { accessorKey: 'article', header: 'Article', cell: ({ row }) => <HighlightText text={row.original.article} query={query} /> },
       { accessorKey: 'itemDescription', header: 'Description', cell: ({ row }) => <HighlightText text={row.original.itemDescription} query={query} /> },
       { accessorKey: 'issuedTo', header: 'Issued To', cell: ({ row }) => <HighlightText text={row.original.issuedTo || 'Unassigned'} query={query} /> },
-      { accessorKey: 'accountabilityNo', header: 'Accountability', cell: ({ row }) => <HighlightText text={row.original.accountabilityNo} query={query} /> },
+      { accessorKey: 'accountabilityNo', header: 'PAR No.', cell: ({ row }) => <HighlightText text={row.original.accountabilityNo} query={query} /> },
       { accessorKey: 'location', header: 'Location', cell: ({ row }) => <HighlightText text={row.original.location} query={query} /> },
       { accessorKey: 'amount', header: 'Amount', cell: ({ row }) => formatCurrency(row.original.amount) },
       { accessorKey: 'dateIssued', header: 'Date Issued', cell: ({ row }) => formatDate(row.original.dateIssued) },
@@ -121,13 +121,13 @@ export function Equipments() {
       <Card className="p-3 sm:p-5">
         <SearchBar value={query} onChange={updateQuery} placeholder="Search by property no., employee, description, status, location..." />
       </Card>
-      <DataTable data={filtered} columns={columns} enableSelection onSelectionChange={setSelected} />
+      <DataTable data={filtered} columns={columns} enableSelection loading={equipmentLoading} loadingLabel="Loading equipment..." onSelectionChange={setSelected} />
       <EquipmentFormModal
         open={formOpen}
         employees={employees}
         equipment={editing}
         existingEquipment={equipment}
-        loading={mutations.createEquipment.isPending || mutations.updateEquipment.isPending}
+        loading={employeesLoading || mutations.createEquipment.isPending || mutations.updateEquipment.isPending}
         onClose={() => setFormOpen(false)}
         onSubmit={(payload) => {
           const duplicateEquipment = findDuplicateEquipment(equipment, payload);

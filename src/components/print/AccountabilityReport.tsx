@@ -175,8 +175,8 @@ function EquipmentTable({
     <table className={`print-equipment-table ${compact ? 'mt-5' : 'mt-8'} w-full border-collapse text-xs`} data-measure-table={measureTable}>
       <thead>
         <tr>
-          {['Property No.', 'Description', 'Accountability', 'Date', 'Status', 'Amount'].map((head) => (
-            <th key={head} className="border border-black px-2 py-2 text-left font-semibold">
+          {['Property No.', 'Description', 'PAR No.', 'Date', 'Status', 'Amount'].map((head) => (
+            <th key={head} className="whitespace-nowrap border border-black px-2 py-2 text-left font-semibold">
               {head}
             </th>
           ))}

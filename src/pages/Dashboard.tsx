@@ -26,8 +26,9 @@ export function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(() => searchParams.get('q') ?? '');
   const debounced = useDebouncedValue(query);
-  const { data: equipment = [] } = useEquipments();
-  const { data: employees = [] } = useEmployees();
+  const { data: equipment = [], isLoading: equipmentLoading } = useEquipments();
+  const { data: employees = [], isLoading: employeesLoading } = useEmployees();
+  const loading = equipmentLoading || employeesLoading;
   const filtered = searchEquipment(equipment, debounced).slice(0, 5);
   const stats = {
     totalEquipments: equipment.length,
@@ -77,7 +78,7 @@ export function Dashboard() {
         </div>
         <SearchBar value={query} onChange={updateQuery} placeholder="Search employees, property numbers, locations..." className="w-full md:w-96" />
       </section>
-      <DashboardStats stats={stats} />
+      <DashboardStats stats={stats} loading={loading} />
       <div className="grid gap-3 sm:gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <Card className="p-4 sm:p-6">
           <div className="mb-4 flex items-start justify-between gap-3 sm:mb-6 sm:items-center sm:gap-4">
@@ -85,9 +86,12 @@ export function Dashboard() {
               <p className="microcopy">Category Statistics</p>
               <h3 className="mt-1 font-semibold text-zinc-950 dark:text-white">Inventory distribution</h3>
             </div>
-            <span className="shrink-0 text-xs text-zinc-500 sm:text-sm">{formatCurrency(stats.totalValue)}</span>
+            <span className="shrink-0 text-xs text-zinc-500 sm:text-sm">{equipmentLoading ? 'Loading...' : formatCurrency(stats.totalValue)}</span>
           </div>
           <div className="h-52 sm:h-72">
+            {equipmentLoading ? (
+              <div className="flex h-full items-center justify-center text-sm text-zinc-500">Loading equipment...</div>
+            ) : (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={categoryData}>
                 <defs>
@@ -109,12 +113,16 @@ export function Dashboard() {
                 />
               </AreaChart>
             </ResponsiveContainer>
+            )}
           </div>
         </Card>
         <Card className="p-4 sm:p-6">
           <p className="microcopy">Status Overview</p>
           <div className="mt-4 grid gap-4 sm:mt-5 sm:grid-cols-[0.9fr_1fr] sm:items-center">
             <div className="h-44 sm:h-52">
+              {equipmentLoading ? (
+                <div className="flex h-full items-center justify-center text-sm text-zinc-500">Loading equipment...</div>
+              ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={statusData} dataKey="value" nameKey="name" innerRadius={52} outerRadius={82} paddingAngle={3}>
@@ -125,9 +133,11 @@ export function Dashboard() {
                   <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipTextStyle} labelStyle={tooltipTextStyle} />
                 </PieChart>
               </ResponsiveContainer>
+              )}
             </div>
             <div className="space-y-3">
-              {statusData.map((item, index) => (
+              {equipmentLoading ? <p className="text-sm text-zinc-500">Loading status...</p> : null}
+              {!equipmentLoading && statusData.map((item, index) => (
                 <div key={item.name || `status-${index}`} className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-2 text-zinc-600 dark:text-zinc-300">
                     <span className="size-2 rounded-full" style={{ background: chartColors[index % chartColors.length] }} />
@@ -143,7 +153,8 @@ export function Dashboard() {
       <Card className="p-4 sm:p-6">
         <p className="microcopy">Recently Updated Equipments</p>
         <div className="mt-2 divide-y divide-zinc-100 sm:mt-4 dark:divide-zinc-900">
-          {(filtered.length ? filtered : equipment.slice(0, 5)).map((item, index) => (
+          {equipmentLoading ? <p className="py-4 text-sm text-zinc-500">Loading equipment...</p> : null}
+          {!equipmentLoading && (filtered.length ? filtered : equipment.slice(0, 5)).map((item, index) => (
             <div key={item.id || `${item.propertyNo}-${index}`} className="grid gap-2 py-3 md:grid-cols-[1fr_auto_auto] md:items-center">
               <div>
                 <p className="font-medium text-zinc-950 dark:text-white">{item.article}</p>
