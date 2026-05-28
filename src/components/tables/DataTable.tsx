@@ -21,6 +21,7 @@ type DataTableProps<T> = {
   globalFilter?: string;
   enableSelection?: boolean;
   loading?: boolean;
+  noWrapCells?: boolean;
   onSelectionChange?: (rows: T[]) => void;
   onRowClick?: (row: T) => void;
 };
@@ -31,6 +32,7 @@ export function DataTable<T>({
   globalFilter = '',
   enableSelection,
   loading,
+  noWrapCells,
   onSelectionChange,
   onRowClick,
 }: DataTableProps<T>) {
@@ -162,7 +164,7 @@ export function DataTable<T>({
                     <td
                       key={cell.id}
                       className={`max-w-[28rem] border-b border-zinc-100 px-3 py-3 align-middle leading-6 text-zinc-700 sm:px-5 sm:py-4 dark:border-zinc-900 dark:text-zinc-200 ${
-                        isDescription ? 'w-80 overflow-hidden whitespace-normal' : 'whitespace-normal break-words'
+                        isDescription ? 'w-80 overflow-hidden whitespace-normal' : noWrapCells ? 'whitespace-nowrap' : 'whitespace-normal break-words'
                       } ${index === 0 ? 'sticky left-0 bg-white group-hover:bg-zinc-50 dark:bg-zinc-950 dark:group-hover:bg-zinc-900' : ''}`}
                     >
                       {isDescription ? (

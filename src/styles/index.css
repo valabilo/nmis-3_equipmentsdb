@@ -133,6 +133,17 @@
     scrollbar-color: rgb(161 161 170 / 0.5) transparent;
   }
 
+  .no-number-spinner {
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+
+  .no-number-spinner::-webkit-inner-spin-button,
+  .no-number-spinner::-webkit-outer-spin-button {
+    margin: 0;
+    -webkit-appearance: none;
+  }
+
   .section-heading h1,
   .section-heading h2,
   .section-heading h3,

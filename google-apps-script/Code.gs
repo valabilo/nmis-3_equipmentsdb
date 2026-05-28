@@ -171,7 +171,7 @@ function validateEmployee(employee) {
 function getEquipments() {
   return CONFIG.equipmentSheets.flatMap((sheetName) => {
     const sheet = getSheet(sheetName);
-    return readRows(sheet).map((row, index) => normalizeEquipment(row, sheetName, index + 2));
+    return readRowsWithIndexes(sheet).map((item) => normalizeEquipment(item.row, sheetName, item.rowIndex));
   });
 }
 
@@ -186,27 +186,32 @@ function createEquipment(equipment) {
   const headers = getHeaders(sheet);
   const accountabilityHeader = equipment.accountabilityType === 'ICS' ? 'ICS No.' : 'PAR No.';
   const row = headers.map((header) => {
-    switch (header) {
-      case 'Article':
+    switch (normalizeHeader(header)) {
+      case 'article':
         return equipment.article || '';
-      case 'Property No.':
+      case 'property no.':
+      case 'property no':
+      case 'property number':
         return equipment.propertyNo || '';
-      case 'Item Description':
+      case 'item description':
+      case 'description':
         return equipment.itemDescription || '';
-      case 'Amount':
+      case 'amount':
         return equipment.amount || 0;
-      case 'PAR No.':
-      case 'ICS No.':
-        return header === accountabilityHeader ? equipment.accountabilityNo || '' : '';
-      case 'Issued To':
+      case 'par no.':
+      case 'par no':
+      case 'ics no.':
+      case 'ics no':
+        return normalizeHeader(header) === normalizeHeader(accountabilityHeader) ? equipment.accountabilityNo || '' : '';
+      case 'issued to':
         return equipment.issuedTo || '';
-      case 'Date Issued':
+      case 'date issued':
         return equipment.dateIssued || '';
-      case 'Status':
+      case 'status':
         return equipment.status || '';
-      case 'Location':
+      case 'location':
         return equipment.location || '';
-      case 'Remarks':
+      case 'remarks':
         return equipment.remarks || '';
       default:
         return '';
@@ -219,42 +224,58 @@ function createEquipment(equipment) {
 function updateEquipment(equipment) {
   validateEquipment(equipment);
   if (!equipment.id) throw new Error('Equipment id is required');
-  const match = findEquipmentRow(equipment.id);
+  const match = findEquipmentRow(equipment.id) || findEquipmentRowByProperty(equipment.category, equipment.propertyNo);
   if (!match) throw new Error('Equipment not found');
   const sheet = match.sheet;
   const headers = getHeaders(sheet);
+  const statusColumn = findHeaderIndex(headers, ['status']) + 1;
+  if (!statusColumn) throw new Error(`Missing Status column on sheet: ${match.sheetName}`);
   const current = rowObject(headers, sheet.getRange(match.rowIndex, 1, 1, headers.length).getValues()[0]);
   const merged = Object.assign({}, normalizeEquipment(current, match.sheetName, match.rowIndex), equipment);
   const accountabilityHeader = merged.accountabilityType === 'ICS' ? 'ICS No.' : 'PAR No.';
   const values = headers.map((header) => {
-    switch (header) {
-      case 'Article':
+    switch (normalizeHeader(header)) {
+      case 'article':
         return merged.article;
-      case 'Property No.':
+      case 'property no.':
+      case 'property no':
+      case 'property number':
         return merged.propertyNo;
-      case 'Item Description':
+      case 'item description':
+      case 'description':
         return merged.itemDescription;
-      case 'Amount':
+      case 'amount':
         return merged.amount;
-      case 'PAR No.':
-      case 'ICS No.':
-        return header === accountabilityHeader ? merged.accountabilityNo : '';
-      case 'Issued To':
+      case 'par no.':
+      case 'par no':
+      case 'ics no.':
+      case 'ics no':
+        return normalizeHeader(header) === normalizeHeader(accountabilityHeader) ? merged.accountabilityNo : '';
+      case 'issued to':
         return merged.issuedTo;
-      case 'Date Issued':
+      case 'date issued':
         return merged.dateIssued;
-      case 'Status':
+      case 'status':
         return merged.status;
-      case 'Location':
+      case 'location':
         return merged.location;
-      case 'Remarks':
+      case 'remarks':
         return merged.remarks;
       default:
         return current[header] || '';
     }
   });
   sheet.getRange(match.rowIndex, 1, 1, headers.length).setValues([values]);
-  return normalizeEquipment(rowObject(headers, values), match.sheetName, match.rowIndex);
+  sheet.getRange(match.rowIndex, statusColumn).setValue(String(merged.status || '').trim());
+  SpreadsheetApp.flush();
+
+  const saved = rowObject(headers, sheet.getRange(match.rowIndex, 1, 1, headers.length).getValues()[0]);
+  const updated = normalizeEquipment(saved, match.sheetName, match.rowIndex);
+  if (String(updated.status || '').trim() !== String(merged.status || '').trim()) {
+    throw new Error(`Status did not save. Expected "${merged.status || ''}", got "${updated.status || ''}"`);
+  }
+
+  return updated;
 }
 
 function deleteEquipment(id) {
@@ -294,23 +315,39 @@ function findEquipmentRow(id) {
   return null;
 }
 
+function findEquipmentRowByProperty(category, propertyNo) {
+  if (!category || !propertyNo) return null;
+  const sheet = getSheet(category);
+  const headers = getHeaders(sheet);
+  const rows = sheet.getDataRange().getValues();
+  const propertyNoColumn = findHeaderIndex(headers, ['property no.', 'property no', 'property number']) + 1;
+  if (!propertyNoColumn) return null;
+  const target = normalizeLookupValue(propertyNo);
+  for (let i = 1; i < rows.length; i += 1) {
+    if (normalizeLookupValue(rows[i][propertyNoColumn - 1]) === target) {
+      return { sheet, sheetName: category, rowIndex: i + 1 };
+    }
+  }
+  return null;
+}
+
 function normalizeEquipment(row, category, rowIndex) {
-  const par = row['PAR No.'] || '';
-  const ics = row['ICS No.'] || '';
+  const par = getRowValue(row, ['par no.', 'par no']) || '';
+  const ics = getRowValue(row, ['ics no.', 'ics no']) || '';
   return {
-    id: `${category}::${rowIndex}::${row['Property No.'] || ''}`,
+    id: `${category}::${rowIndex}::${getRowValue(row, ['property no.', 'property no', 'property number']) || ''}`,
     category,
-    article: row.Article || '',
-    propertyNo: row['Property No.'] || '',
-    itemDescription: row['Item Description'] || '',
-    amount: Number(row.Amount || 0),
+    article: getRowValue(row, ['article']) || '',
+    propertyNo: getRowValue(row, ['property no.', 'property no', 'property number']) || '',
+    itemDescription: getRowValue(row, ['item description', 'description']) || '',
+    amount: Number(getRowValue(row, ['amount']) || 0),
     accountabilityNo: par || ics,
     accountabilityType: ics ? 'ICS' : 'PAR',
-    issuedTo: row['Issued To'] || '',
-    dateIssued: stringifyDate(row['Date Issued']),
-    status: row.Status || '',
-    location: row.Location || '',
-    remarks: row.Remarks || '',
+    issuedTo: getRowValue(row, ['issued to']) || '',
+    dateIssued: stringifyDate(getRowValue(row, ['date issued'])),
+    status: getRowValue(row, ['status']) || '',
+    location: getRowValue(row, ['location']) || '',
+    remarks: getRowValue(row, ['remarks']) || '',
     updatedAt: new Date().toISOString(),
   };
 }
@@ -323,10 +360,18 @@ function validateEquipment(equipment) {
 }
 
 function readRows(sheet) {
+  return readRowsWithIndexes(sheet).map((item) => item.row);
+}
+
+function readRowsWithIndexes(sheet) {
   const values = sheet.getDataRange().getValues();
   if (values.length < 2) return [];
   const headers = values[0].map(String);
-  return values.slice(1).filter((row) => row.some(Boolean)).map((row) => rowObject(headers, row));
+  return values
+    .slice(1)
+    .map((row, index) => ({ row, rowIndex: index + 2 }))
+    .filter((item) => item.row.some(Boolean))
+    .map((item) => ({ row: rowObject(headers, item.row), rowIndex: item.rowIndex }));
 }
 
 function rowObject(headers, row) {
@@ -338,6 +383,18 @@ function rowObject(headers, row) {
 
 function getHeaders(sheet) {
   return sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(String);
+}
+
+function findHeaderIndex(headers, headerNames) {
+  const normalizedNames = headerNames.map(normalizeHeader);
+  for (let i = 0; i < headers.length; i += 1) {
+    if (normalizedNames.indexOf(normalizeHeader(headers[i])) !== -1) return i;
+  }
+  return -1;
+}
+
+function normalizeLookupValue(value) {
+  return String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
 function getSheet(name) {

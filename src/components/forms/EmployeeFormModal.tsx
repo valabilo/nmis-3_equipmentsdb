@@ -47,8 +47,8 @@ export function EmployeeFormModal({
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={() => onSubmit(trimEmployee(form))} disabled={loading || !isValid}>
-            {employee ? 'Update employee' : 'Create employee'}
+          <Button loading={loading} onClick={() => onSubmit(trimEmployee(form))} disabled={!isValid}>
+            {loading ? 'Saving...' : employee ? 'Update employee' : 'Create employee'}
           </Button>
         </div>
       }

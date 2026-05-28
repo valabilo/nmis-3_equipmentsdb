@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { SHEET_TABS } from '../../constants/sheets';
+import { EQUIPMENT_STATUSES, SHEET_TABS } from '../../constants/sheets';
 import type { Employee, Equipment, EquipmentPayload } from '../../types';
 import { findDuplicateEquipment } from '../../utils/equipment';
 import { Button } from '../ui/Button';
@@ -17,9 +17,14 @@ const emptyEquipment: EquipmentPayload = {
   accountabilityType: 'PAR',
   issuedTo: '',
   dateIssued: '',
-  status: 'Available',
+  status: 'Existing',
   location: '',
   remarks: '',
+};
+
+type EquipmentFormState = Omit<EquipmentPayload, 'amount'> & {
+  id?: string;
+  amount: number | '';
 };
 
 export function EquipmentFormModal({
@@ -39,7 +44,7 @@ export function EquipmentFormModal({
   onClose: () => void;
   onSubmit: (payload: EquipmentPayload & { id?: string }) => void;
 }) {
-  const [form, setForm] = useState<EquipmentPayload & { id?: string }>(emptyEquipment);
+  const [form, setForm] = useState<EquipmentFormState>(emptyEquipment);
   const duplicateEquipment = findDuplicateEquipment(existingEquipment, form);
   const isDuplicate = Boolean(duplicateEquipment);
 
@@ -61,8 +66,8 @@ export function EquipmentFormModal({
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={() => onSubmit(form)} disabled={loading || !form.propertyNo || !form.itemDescription || isDuplicate}>
-            {equipment ? 'Update record' : 'Create record'}
+          <Button loading={loading} onClick={() => onSubmit(normalizeEquipment(form))} disabled={!form.propertyNo || !form.itemDescription || isDuplicate}>
+            {loading ? 'Saving...' : equipment ? 'Update record' : 'Create record'}
           </Button>
         </div>
       }
@@ -92,7 +97,13 @@ export function EquipmentFormModal({
           ) : null}
         </Field>
         <Field label="Amount">
-          <Input type="number" value={form.amount} onChange={(event) => update('amount', Number(event.target.value))} />
+          <Input
+            type="number"
+            inputMode="decimal"
+            className="no-number-spinner"
+            value={form.amount}
+            onChange={(event) => update('amount', event.target.value === '' ? '' : Number(event.target.value))}
+          />
         </Field>
         <Field label="Reference type">
           <Select value={form.accountabilityType} onChange={(event) => update('accountabilityType', event.target.value)}>
@@ -116,7 +127,8 @@ export function EquipmentFormModal({
         </Field>
         <Field label="Status">
           <Select value={form.status} onChange={(event) => update('status', event.target.value)}>
-            {['Available', 'Assigned', 'Returned', 'For Repair', 'Disposed'].map((status) => (
+            <option value="">No Status</option>
+            {EQUIPMENT_STATUSES.map((status) => (
               <option key={status}>{status}</option>
             ))}
           </Select>
@@ -133,6 +145,22 @@ export function EquipmentFormModal({
       </div>
     </Modal>
   );
+}
+
+function normalizeEquipment(equipment: EquipmentFormState) {
+  return {
+    ...equipment,
+    article: String(equipment.article ?? '').trim(),
+    propertyNo: String(equipment.propertyNo ?? '').trim(),
+    itemDescription: String(equipment.itemDescription ?? '').trim(),
+    accountabilityNo: String(equipment.accountabilityNo ?? '').trim(),
+    issuedTo: String(equipment.issuedTo ?? '').trim(),
+    dateIssued: String(equipment.dateIssued ?? '').trim(),
+    status: String(equipment.status ?? '').trim(),
+    location: String(equipment.location ?? '').trim(),
+    remarks: String(equipment.remarks ?? '').trim(),
+    amount: Number(equipment.amount || 0),
+  };
 }
 
 function Field({ label, children, className = '' }: { label: string; children: ReactNode; className?: string }) {

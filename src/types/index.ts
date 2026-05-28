@@ -24,7 +24,7 @@ export type EquipmentCategory =
   | 'OFFICE EQUIPMENTS - EXPANDABLES'
   | 'SUPPLIES AND SEMI-EXPENDABLES/OFFICE EQUIPMENT';
 
-export type EquipmentStatus = 'Assigned' | 'Available' | 'Returned' | 'For Repair' | 'Disposed' | string;
+export type EquipmentStatus = 'Existing' | 'Missing' | 'Unserviceable' | 'Transferred' | 'Returned' | 'For Disposal' | 'Serviceable' | string;
 
 export type Equipment = {
   id: string;

@@ -5,6 +5,7 @@ type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
   icon?: ReactNode;
+  loading?: boolean;
 };
 
 const variants: Record<ButtonVariant, string> = {
@@ -15,13 +16,19 @@ const variants: Record<ButtonVariant, string> = {
   danger: 'bg-rose-600 text-white hover:bg-rose-500',
 };
 
-export function Button({ className = '', variant = 'primary', icon, children, ...props }: ButtonProps) {
+export function Button({ className = '', variant = 'primary', icon, loading = false, children, disabled, ...props }: ButtonProps) {
   return (
     <button
       className={`inline-flex h-10 max-w-full items-center justify-center gap-2.5 rounded-lg px-4 text-sm font-medium leading-normal transition disabled:pointer-events-none disabled:opacity-50 ${variants[variant]} ${className}`}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
       {...props}
     >
-      {icon ? <span className="flex size-4 shrink-0 items-center justify-center overflow-visible [&>svg]:size-4 [&>svg]:overflow-visible">{icon}</span> : null}
+      {loading ? (
+        <span className="size-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />
+      ) : icon ? (
+        <span className="flex size-4 shrink-0 items-center justify-center overflow-visible [&>svg]:size-4 [&>svg]:overflow-visible">{icon}</span>
+      ) : null}
       {children ? <span className="min-w-0 truncate">{children}</span> : null}
     </button>
   );

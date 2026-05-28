@@ -64,7 +64,7 @@ export function Employees() {
         id: 'profile',
         header: 'Actions',
         cell: ({ row }) => (
-          <div className="flex flex-wrap gap-1" onClick={(event) => event.stopPropagation()}>
+          <div className="flex flex-nowrap gap-1" onClick={(event) => event.stopPropagation()}>
             <Button
               variant="ghost"
               className="h-8 px-2"
@@ -131,7 +131,7 @@ export function Employees() {
       <Card className="p-3 sm:p-5">
         <SearchBar value={query} onChange={updateQuery} placeholder="Search employees by name, ID, position, status..." />
       </Card>
-      <DataTable data={filtered} columns={columns} loading={employeesLoading} onRowClick={(employee) => navigate(`/app/employees/${encodeEmployeeKey(employee)}`)} />
+      <DataTable data={filtered} columns={columns} loading={employeesLoading} noWrapCells onRowClick={(employee) => navigate(`/app/employees/${encodeEmployeeKey(employee)}`)} />
       <EmployeeFormModal
         open={formOpen}
         employee={editing}

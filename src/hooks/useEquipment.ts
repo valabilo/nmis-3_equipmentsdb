@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { useAppStore } from '../store/appStore';
-import type { EquipmentPayload } from '../types';
+import type { Equipment, EquipmentPayload } from '../types';
 
 export function useEquipments() {
   return useQuery({
@@ -23,13 +23,14 @@ export function useEquipmentMutations() {
   const pushToast = useAppStore((state) => state.pushToast);
 
   const refresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: ['equipments'] });
+    await queryClient.invalidateQueries({ queryKey: ['equipments'], refetchType: 'inactive' });
   };
 
   return {
     createEquipment: useMutation({
       mutationFn: (equipment: EquipmentPayload) => api.createEquipment(equipment),
-      onSuccess: async () => {
+      onSuccess: async (created) => {
+        queryClient.setQueryData<Equipment[]>(['equipments'], (current = []) => [created, ...current]);
         await refresh();
         pushToast({ title: 'Equipment added', tone: 'success' });
       },
@@ -39,7 +40,13 @@ export function useEquipmentMutations() {
     }),
     updateEquipment: useMutation({
       mutationFn: (equipment: EquipmentPayload & { id: string }) => api.updateEquipment(equipment),
-      onSuccess: async () => {
+      onSuccess: async (updated) => {
+        queryClient.setQueryData<Equipment[]>(['equipments'], (current = []) =>
+          current.map((item) => (item.id === updated.id ? { ...item, ...updated } : item)),
+        );
+        queryClient.setQueriesData<Equipment[]>({ queryKey: ['equipments'] }, (current) =>
+          current?.map((item) => (item.id === updated.id ? { ...item, ...updated } : item)),
+        );
         await refresh();
         pushToast({ title: 'Equipment updated', tone: 'success' });
       },
@@ -49,7 +56,9 @@ export function useEquipmentMutations() {
     }),
     deleteEquipment: useMutation({
       mutationFn: (id: string) => api.deleteEquipment(id),
-      onSuccess: async () => {
+      onSuccess: async (id) => {
+        queryClient.setQueryData<Equipment[]>(['equipments'], (current = []) => current.filter((item) => item.id !== id));
+        queryClient.setQueriesData<Equipment[]>({ queryKey: ['equipments'] }, (current) => current?.filter((item) => item.id !== id));
         await refresh();
         pushToast({ title: 'Equipment deleted', tone: 'success' });
       },

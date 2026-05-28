@@ -12,7 +12,7 @@ export function getEquipmentValue(item: Equipment) {
   return Number(item.amount || 0);
 }
 
-export function findDuplicateEquipment(equipment: Equipment[], candidate: EquipmentPayload & { id?: string }) {
+export function findDuplicateEquipment(equipment: Equipment[], candidate: Pick<EquipmentPayload, 'propertyNo'> & { id?: string }) {
   const propertyNo = normalizeEquipmentKey(candidate.propertyNo);
   if (!propertyNo) return undefined;
 

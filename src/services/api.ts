@@ -187,17 +187,44 @@ export const api = {
     request<Equipment>('createEquipment', {
       method: 'POST',
       body: JSON.stringify({ equipment }),
-    }).then((response) => response.data),
+    })
+      .catch(async (error) => {
+        if (!(error instanceof Error) || error.message !== 'API request failed') throw error;
+        await writeOnlyRequest('createEquipment', { equipment });
+        const equipments = await api.getEquipments();
+        const created = equipments.find((item) => sameEquipment(item, equipment));
+        if (!created) throw new Error('Equipment create did not persist: propertyNo');
+        return { success: true, message: 'Equipment created successfully', data: created };
+      })
+      .then((response) => response.data),
   updateEquipment: (equipment: EquipmentPayload & { id: string }) =>
     request<Equipment>('updateEquipment', {
       method: 'POST',
       body: JSON.stringify({ equipment }),
-    }).then((response) => response.data),
+    })
+      .catch(async (error) => {
+        if (!(error instanceof Error) || error.message !== 'API request failed') throw error;
+        await writeOnlyRequest('updateEquipment', { equipment });
+        const equipments = await api.getEquipments();
+        const updated = equipments.find((item) => item.id === equipment.id) ?? equipments.find((item) => sameEquipment(item, equipment));
+        if (!updated) throw new Error('Equipment update did not persist: propertyNo');
+        return { success: true, message: 'Equipment updated successfully', data: updated };
+      })
+      .then((response) => {
+        assertEquipmentPersisted(equipment, response.data);
+        return response.data;
+      }),
   deleteEquipment: (id: string) =>
     request<string>('deleteEquipment', {
       method: 'POST',
       body: JSON.stringify({ id }),
-    }).then((response) => response.data),
+    })
+      .catch(async (error) => {
+        if (!(error instanceof Error) || error.message !== 'API request failed') throw error;
+        await writeOnlyRequest('deleteEquipment', { id });
+        return { success: true, message: 'Equipment deleted successfully', data: id };
+      })
+      .then((response) => response.data),
 };
 
 function normalizeEmployee(employee: EmployeePayload): Employee {
@@ -215,5 +242,35 @@ function assertEmployeePersisted(expectedEmployee: EmployeePayload, updatedEmplo
 
   if (mismatchedFields.length) {
     throw new Error(`Employee update did not persist: ${mismatchedFields.join(', ')}`);
+  }
+}
+
+function sameEquipment(item: Equipment, equipment: EquipmentPayload) {
+  return (
+    String(item.category) === String(equipment.category) &&
+    String(item.propertyNo).trim().toLowerCase() === String(equipment.propertyNo).trim().toLowerCase()
+  );
+}
+
+function assertEquipmentPersisted(expectedEquipment: EquipmentPayload, updatedEquipment: Equipment) {
+  const mismatchedFields = ([
+    'article',
+    'propertyNo',
+    'itemDescription',
+    'amount',
+    'accountabilityNo',
+    'accountabilityType',
+    'issuedTo',
+    'dateIssued',
+    'status',
+    'location',
+    'remarks',
+  ] as const).filter((field) => {
+    if (field === 'amount') return Number(expectedEquipment.amount || 0) !== Number(updatedEquipment.amount || 0);
+    return String(expectedEquipment[field] ?? '').trim() !== String(updatedEquipment[field] ?? '').trim();
+  });
+
+  if (mismatchedFields.length) {
+    throw new Error(`Equipment update did not persist: ${mismatchedFields.join(', ')}`);
   }
 }
